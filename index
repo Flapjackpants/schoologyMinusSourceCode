@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  </head>
+  <body>
+    <main>
+        <p><img src="susland.png"><p>
+        <h1>(Beta)</h1> 
+        <p><label for="gradesAllHTML">To go Schoology Grades page and open the class you want to look at. Copy and paste the categories in this box that count for points. If you want to edit, simply change the grade you want to make changes to, making sure that you leave it in the format "n [ENTER]/ n".</label></p>
+        <br>
+        <textarea rows = "30" cols = "100" id = "gradesAllHTML" name = "gradesAllHTML" placeholder = "Grades Here"></textarea><br>
+        <button py-click = "grade()" type="button" id = "grade">Calculate</button>
+        <p>Your Total Grade Is...</p>
+        <div id='output'></div>
+        <br><br><br>
+        <p> <label for = "bugReport"> Report Bugs (or email maxkli2007@gmail.com):</label></p>
+        <form class="i-form" action="https://formsubmit.co/maxkli2007@gmail.com" method="POST">
+            <input type="hidden" name="_url" value="https://maxkli2007@gmail.com/http://schoologyminus.42web.io">
+            <textarea rows = "5" cols = "100" id="name" name="message" class="i-email" placeholder="Enter Bugged Grades Page" required></textarea><br>
+            <input type="hidden" name="_template" value="box">
+            <input type="hidden" name="_next" value="http://schoologyminus.42web.io/">
+            <input type="hidden" name="_blacklist" value="">
+            <button type="submit">Send</button>
+        </form>
+        <div id='response'></div>
+        <br><br><br><br><br>
+        <py-script>
+            gradesAll = Element("gradesAllHTML").value.split('\n')
+            
+            def takeNums(string, slash):   # Removes non numbers or dashes
+                gradeNumbers = "1234567890./"
+                realNumbers = "1234567890."
+                result = ""
+                if not slash:
+                    for letter in string:
+                    if letter in realNumbers:
+                        result += letter
+                else:
+                    for letter in string:
+                    if letter in gradeNumbers:
+                        result += letter
+                return result
+
+            def grade():
+                # reset weights to the fraction of the total weight and NOWEIGHT
+                weightsFirst = [100.0]
+                numWeights = 0
+                for line in range(len(gradesAll)):
+                    if "%)" in gradesAll[line] and "category" in gradesAll[line-1].lower():
+                        weightsFirst.append(float(takeNums(gradesAll[line], False)))
+                        numWeights += 1
+                if len(weightsFirst) == 0:
+                    for _ in range(numWeights):
+                        weightsFirst.append(100)
+
+                # Compiling scores
+                filledCategories = []
+                gradesCategories = [1.0]
+                validCategory = False
+                top = 0
+                bottom = 0
+                
+                for line in range(len(gradesAll)):
+                    if "%)" in gradesAll[line] and "category" in gradesAll[line-1].lower():
+                    try:
+                        filledCategories.append(validCategory)
+                        gradesCategories.append(top/bottom)
+                        top = 0
+                        bottom = 0
+                    except:
+                        top = top
+                    if "/ " in gradesAll[line]:
+                        top += float(takeNums(gradesAll[line-1], False))
+                        bottom += float(takeNums(gradesAll[line], False))
+                        validCategory = True
+                filledCategories.append(validCategory)
+                gradesCategories.append(top/bottom)
+
+                # Remove blank categories
+                index = 1
+                while index < len(weightsFirst):
+                    if not filledCategories[index]:
+                        weightsFirst.remove(index)
+                        filledCategories.remove(index)
+                        index -= 1
+                    index += 1
+
+                # Reweigh weights
+                weightsTotal = sum(weightsFirst[1:])
+                for line in range(1, len(weightsFirst)):
+                    weightsFirst[line] = weightsFirst[line]/weightsTotal
+
+                # Calculate Final Score
+                totalScore = 0
+                for line in range(1, len(weightsFirst)):
+                    totalScore += weightsFirst[line] * gradesCategories[line]
+                
+                totalScore = round(totalScore * 100 , 2)
+
+                output = Element("output")
+                output.write(totalScore)
+
+            def writeBug():
+                # submittedBug = Element("bugReport")
+                # submittedBug.clear()
+                response = Element("response")
+                response.write("Submitted!")
+        </py-script>
+    </main>
+  </body>
+</html>
+<style>
